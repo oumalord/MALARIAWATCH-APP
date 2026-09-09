@@ -35,9 +35,20 @@ create table app_users (
   organisation text not null,
   county_id text references counties(id) on delete set null,
   active boolean not null default true,
+  must_change_pin boolean not null default false,
+  created_by uuid references app_users(id) on delete set null,
+  suspended_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table app_users
+  add constraint staff_creation_hierarchy check (
+    (role = 'super_admin' and created_by is null)
+    or (role in ('admin', 'enumerator', 'farmer'))
+  );
+
+create index app_users_role_active_idx on app_users (role, active);
 
 create table wards (
   id uuid primary key default gen_random_uuid(),

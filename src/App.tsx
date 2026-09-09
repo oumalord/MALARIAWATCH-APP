@@ -10,16 +10,20 @@ import Weather from './pages/Weather';
 import Login from './pages/Login';
 import BaselineSurvey from './pages/BaselineSurvey';
 import FarmerDashboard from './pages/FarmerDashboard';
+import AccountManagement from './pages/AccountManagement';
+import ChangePin from './pages/ChangePin';
 
 type Route = '/' | '/early-warning' | '/gis' | '/surveillance' | '/field-data' | '/weather';
 
-export type UserRole = 'enumerator' | 'supervisor' | 'farmer';
+export type UserRole = 'super_admin' | 'admin' | 'enumerator' | 'farmer';
 
 export interface SessionUser {
   name: string;
   role: UserRole;
   organisation: string;
   county?: string;
+  accountId?: string;
+  mustChangePin?: boolean;
 }
 
 const ROUTE_META: Record<Route, { title: string; subtitle: string }> = {
@@ -61,8 +65,10 @@ function App() {
 
   if (!user) return <Login onSignIn={signIn} />;
 
+  if (user.role === 'enumerator' && user.mustChangePin) return <ChangePin user={user} onChanged={signIn} onSignOut={signOut} />;
   if (user.role === 'enumerator') return <BaselineSurvey user={user} onSignOut={signOut} />;
   if (user.role === 'farmer') return <FarmerDashboard user={user} onSignOut={signOut} />;
+  if (user.role === 'super_admin' || user.role === 'admin') return <AccountManagement user={user} onSignOut={signOut} />;
 
   const meta = ROUTE_META[route];
 

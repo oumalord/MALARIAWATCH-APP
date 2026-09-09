@@ -39,7 +39,7 @@ export default function Sidebar({ currentRoute, user, onSignOut }: { currentRout
       <div className="mt-4 rounded-xl bg-[#16332A] p-3.5">
         <p className="text-[11px] font-medium text-[#B9C7BE]">Signed in as</p>
         <p className="mt-1 text-[13px] font-semibold text-white">{user.name}</p>
-        <p className="text-[11.5px] text-[#B9C7BE]">{user.role === 'enumerator' ? 'Field Enumerator' : 'Supervisor / Admin'} · {user.organisation}</p>
+        <p className="text-[11.5px] text-[#B9C7BE]">{user.role === 'enumerator' ? 'Field Enumerator' : user.role === 'super_admin' ? 'Super Admin' : 'Administrator'} · {user.organisation}</p>
         <button type="button" onClick={onSignOut} className="mt-3 w-full rounded-lg border border-[#315144] px-3 py-2 text-left text-[12px] font-semibold text-[#D7E5DC] transition-colors hover:bg-[#234638]">Log out</button>
       </div>
     </aside>
