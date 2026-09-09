@@ -18,6 +18,12 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 :focus-visible { outline: 2px solid #0E7C5A; outline-offset: 2px; }
 input::placeholder { color: #8B978F; }
+body:has(main > div > section.w-full) main {
+  background-image: linear-gradient(rgba(4, 29, 19, 0.58), rgba(4, 29, 19, 0.72)), url('/login-background.jpg');
+  background-position: center;
+  background-size: cover;
+  background-attachment: fixed;
+}
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
