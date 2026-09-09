@@ -1,0 +1,53 @@
+# Tests
+
+## Test 1 - Navigate core modules and view the national risk map [sanity]
+Viewport: desktop
+Covers: sidebar navigation across all modules, dashboard KPI rendering, GIS map rendering with county markers
+Description: Verifies the primary navigation loads each module and the GIS map renders interactive county markers.
+
+Steps:
+1. Load the app
+2. Confirm the Dashboard shows active alerts and a risk map preview
+3. Click "GIS Map" in the sidebar
+4. Confirm the GIS Intelligence Map page loads with an interactive map and county markers
+
+Expected: The GIS Intelligence Map page is shown with a Kenya map and clickable county markers visible.
+
+## Test 2 - Advance an early warning alert through its response workflow
+Viewport: desktop
+Covers: alert status workflow (created to acknowledged to investigating to resolved), in-session state update
+Description: Verifies a supervisor can move an alert through the response workflow and see the status reflected immediately.
+
+Steps:
+1. Open "Early Warning & Alerts" from the sidebar
+2. Locate the alert for Busia, Matayos Ward, which starts with status "Created"
+3. Click "Acknowledge"
+4. Click "Mark investigating"
+5. Click "Resolve"
+
+Expected: The Busia alert's status pill shows "Resolved" after the three actions.
+
+## Test 3 - Filter early warning alerts by risk level on mobile
+Viewport: mobile
+Covers: risk-level filter interaction, responsive layout of the alerts list
+Description: Verifies selecting a risk-level filter narrows the alert list and the page remains usable on a small viewport.
+
+Steps:
+1. Open "Early Warning & Alerts" on a mobile viewport
+2. Select the "Critical" risk filter
+
+Expected: Only the Homa Bay critical alert remains visible in the list; alerts of other severities are hidden.
+
+## Test 4 - Verify and reject field data submissions
+Viewport: desktop
+Covers: data verification workflow, status pill update, guardrail on already-completed submissions
+Description: Verifies a supervisor can approve or reject pending field submissions and that completed submissions no longer show action buttons.
+
+Steps:
+1. Open "Field Data & M&E" from the sidebar
+2. Locate the submission with status "Pending" from enumerator "J. Otieno"
+3. Click "Verify"
+4. Locate the submission with status "Under review" from enumerator "F. Wekesa"
+5. Click "Reject"
+
+Expected: The J. Otieno submission's status pill changes to "Verified" and the F. Wekesa submission's status pill changes to "Rejected"; both no longer show Verify/Reject buttons.
