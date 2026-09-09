@@ -13,7 +13,7 @@ import FarmerDashboard from './pages/FarmerDashboard';
 import AccountManagement from './pages/AccountManagement';
 import ChangePin from './pages/ChangePin';
 
-type Route = '/' | '/early-warning' | '/gis' | '/surveillance' | '/field-data' | '/weather';
+type Route = '/' | '/early-warning' | '/gis' | '/surveillance' | '/field-data' | '/weather' | '/accounts';
 
 export type UserRole = 'super_admin' | 'admin' | 'enumerator' | 'farmer';
 
@@ -33,6 +33,7 @@ const ROUTE_META: Record<Route, { title: string; subtitle: string }> = {
   '/surveillance': { title: 'Malaria Surveillance', subtitle: 'Aggregate testing and positivity trends by county' },
   '/field-data': { title: 'Field Data & M&E', subtitle: 'Baseline, endline, indicators and data verification' },
   '/weather': { title: 'Weather & Environment', subtitle: 'Rainfall, temperature and breeding-habitat observations' },
+  '/accounts': { title: 'Account Management', subtitle: 'Create, suspend, and reactivate programme accounts' },
 };
 
 function getRoute(): Route {
@@ -68,7 +69,7 @@ function App() {
   if (user.role === 'enumerator' && user.mustChangePin) return <ChangePin user={user} onChanged={signIn} onSignOut={signOut} />;
   if (user.role === 'enumerator') return <BaselineSurvey user={user} onSignOut={signOut} />;
   if (user.role === 'farmer') return <FarmerDashboard user={user} onSignOut={signOut} />;
-  if (user.role === 'super_admin' || user.role === 'admin') return <AccountManagement user={user} onSignOut={signOut} />;
+  if (user.role === 'admin') return <AccountManagement user={user} onSignOut={signOut} />;
 
   const meta = ROUTE_META[route];
 
@@ -84,6 +85,7 @@ function App() {
           {route === '/surveillance' && <Surveillance />}
           {route === '/field-data' && <FieldData />}
           {route === '/weather' && <Weather />}
+          {route === '/accounts' && <AccountManagement user={user} onSignOut={signOut} />}
         </main>
       </div>
     </div>

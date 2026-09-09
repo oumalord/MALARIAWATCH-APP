@@ -1,4 +1,4 @@
-import { LayoutDashboard, ShieldAlert, Map, Activity, ClipboardList, CloudRain } from 'lucide-react';
+import { LayoutDashboard, ShieldAlert, Map, Activity, ClipboardList, CloudRain, UsersRound } from 'lucide-react';
 import type { SessionUser } from '../App';
 
 const NAV = [
@@ -11,6 +11,7 @@ const NAV = [
 ] as const;
 
 export default function Sidebar({ currentRoute, user, onSignOut }: { currentRoute: string; user: SessionUser; onSignOut: () => void }) {
+  const navigation = user.role === 'super_admin' ? [...NAV, { path: '/accounts', label: 'Account Management', icon: UsersRound }] : NAV;
   return (
     <aside className="hidden w-64 shrink-0 flex-col bg-[#0D1C18] px-4 py-6 md:flex">
       <div className="flex items-center gap-2.5 px-2 pb-8">
@@ -21,7 +22,7 @@ export default function Sidebar({ currentRoute, user, onSignOut }: { currentRout
         </div>
       </div>
       <nav className="flex flex-1 flex-col gap-1">
-        {NAV.map((item) => {
+        {navigation.map((item) => {
           const Icon = item.icon;
           const active = currentRoute === item.path;
           return (
