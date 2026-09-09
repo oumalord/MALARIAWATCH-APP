@@ -74,6 +74,22 @@ create table warning_alerts (
   updated_at timestamptz not null default now()
 );
 
+create table climate_notifications (
+  id text primary key,
+  county_id text references counties(id) on delete cascade,
+  kind text not null check (kind in ('weather', 'drought', 'elnino', 'flood', 'health')),
+  title text not null,
+  summary text not null,
+  timing text not null,
+  severity text not null check (severity in ('Advisory', 'Watch', 'Warning')),
+  source text not null,
+  issued_at timestamptz not null default now(),
+  expires_at timestamptz,
+  actions jsonb not null default '[]'::jsonb check (jsonb_typeof(actions) = 'array'),
+  active boolean not null default true,
+  created_by uuid references app_users(id) on delete set null
+);
+
 create table indicators (
   code text primary key,
   name text not null,
@@ -128,6 +144,7 @@ create table weather_observations (
 
 create index warning_alerts_county_status_idx on warning_alerts (county_id, status);
 create index warning_alerts_created_at_idx on warning_alerts (created_at desc);
+create index climate_notifications_county_active_idx on climate_notifications (county_id, active, issued_at desc);
 create index field_submissions_status_idx on field_submissions (status);
 create index surveillance_reports_county_period_idx on surveillance_reports (county_id, period_end desc);
 create index weather_observations_county_observed_idx on weather_observations (county_id, observed_at desc);
