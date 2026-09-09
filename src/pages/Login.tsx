@@ -123,13 +123,13 @@ export default function Login({ onSignIn }: { onSignIn: (user: SessionUser) => v
           <div className="mb-6 grid grid-cols-2 rounded-full bg-[#EFF0F2] p-1">
             {(['farmer', 'enumerator'] as const).map((item) => (
               <button key={item} type="button" onClick={() => selectRole(item)} className={`rounded-full px-2 py-2.5 text-xs font-semibold ${role === item ? 'bg-white text-[#14201A] shadow-sm' : 'text-[#55665C]'}`}>
-                {item === 'farmer' ? 'Farmer' : 'Programme login'}
+                {item === 'farmer' ? 'Farmer' : 'Enumerator'}
               </button>
             ))}
           </div>
 
           <div className="mb-5">
-            <h2 className="font-display text-[19px] font-bold">{farmerSignup ? 'Create your farmer account' : role === 'enumerator' ? 'Programme login' : 'Farmer login'}</h2>
+            <h2 className="font-display text-[19px] font-bold">{farmerSignup ? 'Create your farmer account' : role === 'enumerator' ? 'Enumerator login' : 'Farmer login'}</h2>
             <p className="mt-1 text-[13px] leading-5 text-[#55665C]">{role === 'enumerator' ? 'Use the credentials provided by your programme administrator. Staff accounts go directly to the dashboard.' : 'Receive local malaria, weather, and surveillance warnings for your county.'}</p>
           </div>
 
