@@ -1,6 +1,6 @@
 create extension if not exists pgcrypto;
 
-create type user_role as enum ('enumerator', 'supervisor', 'farmer');
+create type user_role as enum ('super_admin', 'admin', 'enumerator', 'farmer');
 create type risk_level as enum ('low', 'watch', 'alert', 'critical');
 create type alert_status as enum ('created', 'acknowledged', 'investigating', 'resolved');
 create type confidence_level as enum ('Low', 'Moderate', 'High');
