@@ -51,10 +51,11 @@ export default function Login({ onSignIn }: { onSignIn: (user: SessionUser) => v
   function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault(); setError('');
     if (role === 'farmer' && mode === 'signup') {
-      if (!name.trim() || !phone.trim() || !county || !email.trim() || pin.length < 6) { setError('Enter your name, phone, county, email, and a password or PIN of at least 6 characters.'); return; }
+      if (!name.trim() || !phone.trim() || !county || !email.trim() || pin.length < 4) { setError('Complete all fields and use a PIN or password of at least 4 characters.'); return; }
       const farmer: SessionUser = { accountId: `farmer-${Date.now()}`, name: name.trim(), role: 'farmer', organisation: 'MalariaWatch Farmer Network', county };
-      const farmers = JSON.parse(window.localStorage.getItem(FARMER_KEY) ?? '[]') as SessionUser[];
-      window.localStorage.setItem(FARMER_KEY, JSON.stringify([...farmers, { ...farmer, email, pin, phone, active: true }]));
+      const farmers = JSON.parse(window.localStorage.getItem(FARMER_KEY) ?? '[]') as Array<SessionUser & { email: string }>;
+      if (farmers.some((item) => item.email.toLowerCase() === email.trim().toLowerCase())) { setError('An account with this email already exists. Log in instead.'); return; }
+      window.localStorage.setItem(FARMER_KEY, JSON.stringify([...farmers, { ...farmer, email: email.trim().toLowerCase(), pin, phone, active: true }]));
       onSignIn(farmer); return;
     }
     if (role === 'farmer') {
