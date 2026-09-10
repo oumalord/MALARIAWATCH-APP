@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { AlertTriangle, MapPin, Clock, Users, Layers } from 'lucide-react';
 import { Card, RiskBadge, AlertStatusPill, RISK_META } from '../components/ui';
-import { counties, alerts as initialAlerts } from '../data/mockData';
+import { useLiveData } from '../lib/liveData';
 import type { RiskLevel, AlertStatus } from '../types';
 
 const STATUS_FLOW: AlertStatus[] = ['created', 'acknowledged', 'investigating', 'resolved'];
@@ -17,13 +17,17 @@ function nextActionLabel(current: AlertStatus): string | null {
 }
 
 export default function EarlyWarning() {
-  const [alerts, setAlerts] = useState(initialAlerts);
+  const { counties, alerts: liveAlerts } = useLiveData();
+  const [statusOverrides, setStatusOverrides] = useState<Record<string, AlertStatus>>({});
   const [riskFilter, setRiskFilter] = useState<RiskLevel | 'all'>('all');
 
+  const alerts = liveAlerts.map((a) => (statusOverrides[a.id] ? { ...a, status: statusOverrides[a.id] } : a));
   const filtered = alerts.filter((a) => riskFilter === 'all' || a.level === riskFilter);
 
   function advance(id: string) {
-    setAlerts((prev) => prev.map((a) => (a.id === id ? { ...a, status: nextStatus(a.status) } : a)));
+    const current = alerts.find((a) => a.id === id);
+    if (!current) return;
+    setStatusOverrides((prev) => ({ ...prev, [id]: nextStatus(current.status) }));
   }
 
   return (

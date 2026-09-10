@@ -1,14 +1,15 @@
-import { ShieldAlert, Activity, ClipboardList, Droplets, ArrowUpRight, Info } from 'lucide-react';
+import { ShieldAlert, Activity, ClipboardList, Droplets, ArrowUpRight, Info, RadioTower } from 'lucide-react';
 import { Card, KpiCard, RiskBadge, AlertStatusPill } from '../components/ui';
 import { LineChart, RiskDistributionBar } from '../components/charts';
 import { KenyaMap } from '../components/KenyaMap';
-import { counties, alerts, surveillanceTrend, weeklyLabels } from '../data/mockData';
+import { useLiveData } from '../lib/liveData';
 
 function severityRank(level: string) {
   return { critical: 4, alert: 3, watch: 2, low: 1 }[level] ?? 0;
 }
 
 export default function Dashboard() {
+  const { counties, alerts, surveillanceTrend, weeklyLabels, lastUpdated } = useLiveData();
   const activeAlerts = alerts.filter((a) => a.status !== 'resolved');
   const riskCounts = counties.reduce<Record<string, number>>((acc, c) => {
     acc[c.risk] = (acc[c.risk] || 0) + 1;
@@ -25,6 +26,10 @@ export default function Dashboard() {
       <div className="flex items-start gap-3 rounded-2xl border border-[#E2E6DE] bg-[#EFF2EC] px-4 py-3">
         <Info size={16} className="mt-0.5 shrink-0 text-[#55665C]" />
         <p className="text-[12.5px] leading-relaxed text-[#55665C]">Illustrative demo dataset for design review. Not connected to live health information systems and does not represent confirmed diagnoses.</p>
+      </div>
+
+      <div className="flex items-center gap-2 text-[11.5px] font-semibold text-[#0A5A41]">
+        <RadioTower size={13} className="animate-pulse" /> Live · refreshes every minute · last updated {lastUpdated.toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })}
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">

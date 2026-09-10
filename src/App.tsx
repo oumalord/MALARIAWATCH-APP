@@ -12,6 +12,7 @@ import BaselineSurvey from './pages/BaselineSurvey';
 import FarmerDashboard from './pages/FarmerDashboard';
 import AccountManagement from './pages/AccountManagement';
 import ChangePin from './pages/ChangePin';
+import AIAssistant from './components/AIAssistant';
 
 type Route = '/' | '/early-warning' | '/gis' | '/surveillance' | '/field-data' | '/weather' | '/accounts';
 
@@ -67,9 +68,9 @@ function App() {
   if (!user) return <Login onSignIn={signIn} />;
 
   if ((user.role === 'enumerator' || user.role === 'admin') && user.mustChangePin) return <ChangePin user={user} onChanged={signIn} onSignOut={signOut} />;
-  if (user.role === 'enumerator') return <BaselineSurvey user={user} onSignOut={signOut} />;
-  if (user.role === 'farmer') return <FarmerDashboard user={user} onSignOut={signOut} />;
-  if (user.role === 'admin') return <AccountManagement user={user} onSignOut={signOut} />;
+  if (user.role === 'enumerator') return <><BaselineSurvey user={user} onSignOut={signOut} /><AIAssistant user={user} /></>;
+  if (user.role === 'farmer') return <><FarmerDashboard user={user} onSignOut={signOut} /><AIAssistant user={user} /></>;
+  if (user.role === 'admin') return <><AccountManagement user={user} onSignOut={signOut} /><AIAssistant user={user} /></>;
 
   const meta = ROUTE_META[route];
 
@@ -88,6 +89,7 @@ function App() {
           {route === '/accounts' && <AccountManagement user={user} onSignOut={signOut} />}
         </main>
       </div>
+      <AIAssistant user={user} />
     </div>
   );
 }

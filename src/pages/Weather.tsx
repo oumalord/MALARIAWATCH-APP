@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Droplets, Thermometer, Wind, CloudRain } from 'lucide-react';
 import { Card } from '../components/ui';
 import { LineChart } from '../components/charts';
-import { weatherTrend, dailyLabels, counties } from '../data/mockData';
+import { useLiveData } from '../lib/liveData';
 
 function MetricCard({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
   return (
@@ -17,6 +17,7 @@ function MetricCard({ icon, label, value }: { icon: ReactNode; label: string; va
 }
 
 export default function Weather() {
+  const { weatherTrend, dailyLabels, counties } = useLiveData();
   const avgRain = Math.round(weatherTrend.rainfall.reduce((a, b) => a + b, 0) / weatherTrend.rainfall.length);
   const avgTemp = (weatherTrend.temperature.reduce((a, b) => a + b, 0) / weatherTrend.temperature.length).toFixed(1);
   const totalStandingWater = counties.reduce((s, c) => s + c.standingWater, 0);

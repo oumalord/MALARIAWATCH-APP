@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { AlertTriangle, Bell, CheckCircle2, CloudRain, Droplets, LogOut, MapPin, ShieldAlert, Thermometer, Wind } from 'lucide-react';
-import { alerts, counties, weatherTrend } from '../data/mockData';
+import { useLiveData } from '../lib/liveData';
 import type { SessionUser } from '../App';
 
 type ClimateNotification = {
@@ -35,6 +35,7 @@ const CLIMATE_NOTIFICATIONS: ClimateNotification[] = [
 const NOTIFICATION_ICONS = { weather: CloudRain, drought: Droplets, elnino: Wind, flood: AlertTriangle, health: ShieldAlert };
 
 export default function FarmerDashboard({ user, onSignOut }: { user: SessionUser; onSignOut: () => void }) {
+  const { alerts, counties, weatherTrend } = useLiveData();
   const [showAll, setShowAll] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(() => typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted');
   const county = counties.find((item) => item.name === user.county) ?? counties.find((item) => item.name === 'Kisumu')!;

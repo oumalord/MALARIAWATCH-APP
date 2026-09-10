@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { Search, MapPin, Droplets, Thermometer, Activity, ShieldAlert } from 'lucide-react';
 import { Card, RiskBadge } from '../components/ui';
 import { KenyaMap } from '../components/KenyaMap';
-import { counties } from '../data/mockData';
+import { useLiveData } from '../lib/liveData';
 import type { RiskLevel } from '../types';
 
 function Stat({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
@@ -16,6 +16,7 @@ function Stat({ icon, label, value }: { icon: ReactNode; label: string; value: s
 }
 
 export default function GIS() {
+  const { counties } = useLiveData();
   const [selectedId, setSelectedId] = useState<string | null>(counties[0]?.id ?? null);
   const [riskFilter, setRiskFilter] = useState<RiskLevel | 'all'>('all');
   const [query, setQuery] = useState('');

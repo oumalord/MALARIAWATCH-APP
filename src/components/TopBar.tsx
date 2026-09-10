@@ -1,7 +1,8 @@
-import { Bell, Search } from 'lucide-react';
-import { alerts } from '../data/mockData';
+import { Bell, Search, RadioTower } from 'lucide-react';
+import { useLiveData } from '../lib/liveData';
 
 export default function TopBar({ title, subtitle }: { title: string; subtitle: string }) {
+  const { alerts, lastUpdated } = useLiveData();
   const activeCount = alerts.filter((a) => a.status !== 'resolved').length;
   return (
     <header className="flex items-center justify-between gap-4 border-b border-[#E2E6DE] bg-white px-4 py-4 sm:px-8">
@@ -21,8 +22,8 @@ export default function TopBar({ title, subtitle }: { title: string; subtitle: s
           )}
         </button>
         <div className="hidden flex-col items-end sm:flex">
-          <span className="text-[13px] font-semibold text-[#14201A]">National Programme</span>
-          <span className="text-[11.5px] text-[#55665C]">2026 season</span>
+          <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-[#14201A]"><RadioTower size={12} className="text-[#0E7C5A]" /> Live</span>
+          <span className="text-[11.5px] text-[#55665C]">Updated {lastUpdated.toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })}</span>
         </div>
       </div>
     </header>

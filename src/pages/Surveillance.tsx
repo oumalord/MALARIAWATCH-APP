@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Activity, Percent, Users, ClipboardCheck } from 'lucide-react';
 import { Card, RiskBadge } from '../components/ui';
 import { LineChart } from '../components/charts';
-import { counties, surveillanceTrend, weeklyLabels } from '../data/mockData';
+import { useLiveData } from '../lib/liveData';
 
 function StatCard({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
   return (
@@ -17,6 +17,7 @@ function StatCard({ icon, label, value }: { icon: ReactNode; label: string; valu
 }
 
 export default function Surveillance() {
+  const { counties, surveillanceTrend, weeklyLabels } = useLiveData();
   const totalSuspected = counties.reduce((s, c) => s + c.suspected, 0);
   const totalTested = counties.reduce((s, c) => s + c.tested, 0);
   const totalPositive = counties.reduce((s, c) => s + c.positive, 0);
