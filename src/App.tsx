@@ -66,7 +66,7 @@ function App() {
 
   if (!user) return <Login onSignIn={signIn} />;
 
-  if (user.role === 'enumerator' && user.mustChangePin) return <ChangePin user={user} onChanged={signIn} onSignOut={signOut} />;
+  if ((user.role === 'enumerator' || user.role === 'admin') && user.mustChangePin) return <ChangePin user={user} onChanged={signIn} onSignOut={signOut} />;
   if (user.role === 'enumerator') return <BaselineSurvey user={user} onSignOut={signOut} />;
   if (user.role === 'farmer') return <FarmerDashboard user={user} onSignOut={signOut} />;
   if (user.role === 'admin') return <AccountManagement user={user} onSignOut={signOut} />;

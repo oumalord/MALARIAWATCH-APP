@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react';
 import { LayoutDashboard, ShieldAlert, Map, Activity, ClipboardList, CloudRain, UsersRound } from 'lucide-react';
 import type { SessionUser } from '../App';
+import { getStoredLogo, LOGO_UPDATED_EVENT } from '../lib/logo';
 
 const NAV = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -12,10 +14,18 @@ const NAV = [
 
 export default function Sidebar({ currentRoute, user, onSignOut }: { currentRoute: string; user: SessionUser; onSignOut: () => void }) {
   const navigation = user.role === 'super_admin' ? [...NAV, { path: '/accounts', label: 'Account Management', icon: UsersRound }] : NAV;
+  const [logoSrc, setLogoSrc] = useState(getStoredLogo());
+
+  useEffect(() => {
+    const update = () => setLogoSrc(getStoredLogo());
+    window.addEventListener(LOGO_UPDATED_EVENT, update);
+    return () => window.removeEventListener(LOGO_UPDATED_EVENT, update);
+  }, []);
+
   return (
     <aside className="hidden w-64 shrink-0 flex-col bg-[#0D1C18] px-4 py-6 md:flex">
       <div className="flex items-center gap-2.5 px-2 pb-8">
-        <img src="/malariawatch-logo.svg" alt="MalariaWatch logo" className="h-11 w-11 rounded-xl object-cover shadow-[0_0_0_2px_rgba(255,255,255,0.1)]" />
+        <img src={logoSrc} alt="MalariaWatch logo" className="h-11 w-11 rounded-xl object-cover shadow-[0_0_0_2px_rgba(255,255,255,0.1)]" />
         <div>
           <p className="font-display text-[15px] font-bold leading-tight text-white">MalariaWatch</p>
           <p className="text-[11px] font-medium leading-tight text-[#B9C7BE]">Kenya Surveillance Programme</p>

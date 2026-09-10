@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ChevronRight, KeyRound, LockKeyhole, Shield, Sparkles, UserRound } from 'lucide-react';
 import type { SessionUser, UserRole } from '../App';
+import { getStoredLogo, LOGO_UPDATED_EVENT } from '../lib/logo';
 
 type StaffAccount = SessionUser & { email: string; pin: string; createdBy: string; active: boolean };
 
@@ -54,6 +55,13 @@ export default function Login({ onSignIn }: { onSignIn: (user: SessionUser) => v
   const [phone, setPhone] = useState('');
   const [county, setCounty] = useState('');
   const [error, setError] = useState('');
+  const [logoSrc, setLogoSrc] = useState(getStoredLogo());
+
+  useEffect(() => {
+    const update = () => setLogoSrc(getStoredLogo());
+    window.addEventListener(LOGO_UPDATED_EVENT, update);
+    return () => window.removeEventListener(LOGO_UPDATED_EVENT, update);
+  }, []);
 
   function selectRole(nextRole: UserRole) {
     setRole(nextRole);
@@ -114,7 +122,7 @@ export default function Login({ onSignIn }: { onSignIn: (user: SessionUser) => v
     <main className="min-h-screen overflow-y-auto bg-[#092318] px-3 py-6 text-[#14201A] sm:px-4 sm:py-16">
       <div className="mx-auto flex min-h-[calc(100vh-3rem)] max-w-[860px] flex-col items-center justify-center">
         <div className="mb-5 text-center sm:mb-7">
-          <img src="/malariawatch-logo.svg" alt="MalariaWatch logo" className="mx-auto h-20 w-20 rounded-2xl object-cover shadow-lg sm:h-24 sm:w-24" />
+          <img src={logoSrc} alt="MalariaWatch logo" className="mx-auto h-20 w-20 rounded-2xl object-cover shadow-lg sm:h-24 sm:w-24" />
           <h1 className="mt-3 font-display text-[22px] font-extrabold text-white sm:mt-4 sm:text-[23px]">MalariaWatch</h1>
           <p className="mt-1 flex items-center justify-center gap-1.5 text-[12px] text-[#9EB7A9] sm:text-[13px]"><Sparkles size={13} /> Kenya malaria and climate intelligence</p>
         </div>
@@ -123,14 +131,14 @@ export default function Login({ onSignIn }: { onSignIn: (user: SessionUser) => v
           <div className="mb-6 grid grid-cols-2 rounded-full bg-[#EFF0F2] p-1">
             {(['farmer', 'enumerator'] as const).map((item) => (
               <button key={item} type="button" onClick={() => selectRole(item)} className={`rounded-full px-2 py-2.5 text-xs font-semibold ${role === item ? 'bg-white text-[#14201A] shadow-sm' : 'text-[#55665C]'}`}>
-                {item === 'farmer' ? 'Farmer' : 'Enumerator'}
+                {item === 'farmer' ? 'Farmer' : 'Staff / Admin'}
               </button>
             ))}
           </div>
 
           <div className="mb-5">
-            <h2 className="font-display text-[19px] font-bold">{farmerSignup ? 'Create your farmer account' : role === 'enumerator' ? 'Enumerator login' : 'Farmer login'}</h2>
-            <p className="mt-1 text-[13px] leading-5 text-[#55665C]">{role === 'enumerator' ? 'Use the credentials provided by your programme administrator. Staff accounts go directly to the dashboard.' : 'Receive local malaria, weather, and surveillance warnings for your county.'}</p>
+            <h2 className="font-display text-[19px] font-bold">{farmerSignup ? 'Create your farmer account' : role === 'enumerator' ? 'Enumerator, admin & super admin login' : 'Farmer login'}</h2>
+            <p className="mt-1 text-[13px] leading-5 text-[#55665C]">{role === 'enumerator' ? 'Enumerators, administrators, and the super admin all sign in here with their email and PIN or password. Each account is taken straight to its own dashboard.' : 'Receive local malaria, weather, and surveillance warnings for your county.'}</p>
           </div>
 
           <form onSubmit={submit} className="space-y-4">
@@ -148,7 +156,7 @@ export default function Login({ onSignIn }: { onSignIn: (user: SessionUser) => v
           </form>
 
           {role === 'farmer' && <button type="button" onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setError(''); }} className="mt-5 w-full text-center text-xs font-bold text-[#0A5A41]">{mode === 'login' ? 'New farmer? Create an account' : 'Already registered? Log in'}</button>}
-          {role === 'enumerator' && <p className="mt-5 rounded-xl border border-dashed border-[#BFD7C8] bg-[#F3FAF5] p-4 text-xs leading-5 text-[#55665C]"><KeyRound size={14} className="mr-1 inline text-[#0E7C5A]" /> Enumerators receive a temporary PIN from their administrator and must change it after login.</p>}
+          {role === 'enumerator' && <p className="mt-5 rounded-xl border border-dashed border-[#BFD7C8] bg-[#F3FAF5] p-4 text-xs leading-5 text-[#55665C]"><KeyRound size={14} className="mr-1 inline text-[#0E7C5A]" /> Enumerators and admins receive a temporary PIN (1234) from whoever created their account and must change it after login. The super admin signs in with the credentials issued at platform setup.</p>}
         </section>
       </div>
     </main>
