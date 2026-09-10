@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { counties as baseCounties, alerts as baseAlerts, weatherTrend as baseWeatherTrend, surveillanceTrend as baseSurveillanceTrend, dailyLabels as baseDailyLabels, weeklyLabels as baseWeeklyLabels } from '../data/mockData';
+import { fetchLiveWeather, type WeatherReading } from './weatherApi';
 import type { County, WarningAlert, RiskLevel } from '../types';
 
 export const LIVE_UPDATE_INTERVAL_MS = 60_000;
@@ -12,6 +13,7 @@ export interface LiveDataState {
   dailyLabels: string[];
   weeklyLabels: string[];
   lastUpdated: Date;
+  weatherSource: 'live' | 'simulated';
 }
 
 const SEVERITY_RANK: Record<RiskLevel, number> = { low: 0, watch: 1, alert: 2, critical: 3 };
@@ -41,10 +43,10 @@ function classifyRisk(county: County): RiskLevel {
   return 'low';
 }
 
-function evolveCounty(county: County): County {
-  const rainfall7d = Math.round(clamp(jitter(county.rainfall7d, 7), 0, 220));
-  const tempAvg = Number(clamp(jitter(county.tempAvg, 0.4), 15, 34).toFixed(1));
-  const humidity = Math.round(clamp(jitter(county.humidity, 3), 20, 95));
+function evolveCounty(county: County, real?: WeatherReading): County {
+  const rainfall7d = real ? real.rainfall7d : Math.round(clamp(jitter(county.rainfall7d, 7), 0, 220));
+  const tempAvg = real ? real.tempAvg : Number(clamp(jitter(county.tempAvg, 0.4), 15, 34).toFixed(1));
+  const humidity = real ? real.humidity : Math.round(clamp(jitter(county.humidity, 3), 20, 95));
   const standingWater = Math.max(0, Math.round(clamp(jitter(county.standingWater, rainfall7d > county.rainfall7d ? 2.5 : 1.2), 0, 60)));
   const suspected = Math.max(0, Math.round(county.suspected + jitter(2, 8)));
   const tested = Math.max(suspected, Math.round(county.tested + jitter(2, 10)));
@@ -101,19 +103,23 @@ class LiveDataStore {
       dailyLabels: [...baseDailyLabels],
       weeklyLabels: [...baseWeeklyLabels],
       lastUpdated: new Date(),
+      weatherSource: 'simulated',
     };
     this.startTimer();
   }
 
   private startTimer() {
     if (typeof window === 'undefined' || this.timer) return;
-    this.timer = setInterval(() => this.tick(), LIVE_UPDATE_INTERVAL_MS);
+    void this.tick();
+    this.timer = setInterval(() => { void this.tick(); }, LIVE_UPDATE_INTERVAL_MS);
   }
 
-  private tick() {
+  private async tick() {
+    const realWeather = await fetchLiveWeather(this.state.counties.map((c) => ({ id: c.id, lat: c.lat, lon: c.lon })));
+
     const newAlerts: WarningAlert[] = [];
     const nextCounties = this.state.counties.map((county) => {
-      const evolved = evolveCounty(county);
+      const evolved = evolveCounty(county, realWeather?.[county.id]);
       const generated = maybeAlert(county.risk, evolved, this.state.alerts, () => ++this.alertSeq);
       if (generated) newAlerts.push(generated);
       evolved.activeAlerts = county.activeAlerts + (generated ? 1 : 0);
@@ -144,6 +150,7 @@ class LiveDataStore {
       dailyLabels,
       weeklyLabels,
       lastUpdated: new Date(),
+      weatherSource: realWeather ? 'live' : 'simulated',
     };
     this.listeners.forEach((listener) => listener());
   }

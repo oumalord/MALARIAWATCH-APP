@@ -9,7 +9,7 @@ function severityRank(level: string) {
 }
 
 export default function Dashboard() {
-  const { counties, alerts, surveillanceTrend, weeklyLabels, lastUpdated } = useLiveData();
+  const { counties, alerts, surveillanceTrend, weeklyLabels, lastUpdated, weatherSource } = useLiveData();
   const activeAlerts = alerts.filter((a) => a.status !== 'resolved');
   const riskCounts = counties.reduce<Record<string, number>>((acc, c) => {
     acc[c.risk] = (acc[c.risk] || 0) + 1;
@@ -29,7 +29,7 @@ export default function Dashboard() {
       </div>
 
       <div className="flex items-center gap-2 text-[11.5px] font-semibold text-[#0A5A41]">
-        <RadioTower size={13} className="animate-pulse" /> Live · refreshes every minute · last updated {lastUpdated.toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })}
+        <RadioTower size={13} className="animate-pulse" /> {weatherSource === 'live' ? 'Live weather (Open-Meteo)' : 'Simulated weather'} · refreshes every minute · last updated {lastUpdated.toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })}
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
