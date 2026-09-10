@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from 'react';
 import { Check, ChevronLeft, ChevronRight, LogOut, ShieldCheck } from 'lucide-react';
 import type { SessionUser } from '../App';
+import { useLiveData } from '../lib/liveData';
+import { createFieldSubmission } from '../lib/api';
 
 type Question = {
   id: string;
@@ -96,6 +98,7 @@ const SECTIONS: Section[] = [
 ];
 
 export default function BaselineSurvey({ user, onSignOut }: { user: SessionUser; onSignOut: () => void }) {
+  const { counties } = useLiveData();
   const [started, setStarted] = useState(false);
   const [consent, setConsent] = useState('');
   const [sectionIndex, setSectionIndex] = useState(0);
@@ -116,8 +119,21 @@ export default function BaselineSurvey({ user, onSignOut }: { user: SessionUser;
 
   function nextSection(event?: FormEvent) {
     event?.preventDefault();
-    if (sectionIndex < SECTIONS.length - 1) setSectionIndex((current) => current + 1);
-    else setSubmitted(true);
+    if (sectionIndex < SECTIONS.length - 1) {
+      setSectionIndex((current) => current + 1);
+      return;
+    }
+    const county = counties.find((c) => c.name === user.county) ?? counties[0];
+    if (county) {
+      void createFieldSubmission({
+        id: `SUB-${Date.now()}`,
+        formType: 'Baseline Survey',
+        enumeratorName: user.name,
+        countyId: county.id,
+        payload: { subcounty: answers.A2 ?? null, answers, notes },
+      }).catch(() => undefined);
+    }
+    setSubmitted(true);
   }
 
   if (submitted) {

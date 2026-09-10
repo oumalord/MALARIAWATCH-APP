@@ -1,37 +1,42 @@
 import { useState } from 'react';
 import { ClipboardList, Users2, CheckCircle2, TrendingUp, TrendingDown } from 'lucide-react';
 import { Card, ProgressBar, VerificationPill } from '../components/ui';
-import { indicators, fieldSubmissions as initialSubmissions } from '../data/mockData';
+import { useLiveData } from '../lib/liveData';
+import { updateFieldSubmissionStatus } from '../lib/api';
 import type { VerificationStatus } from '../types';
 
 export default function FieldData() {
-  const [submissions, setSubmissions] = useState(initialSubmissions);
+  const { indicators, fieldSubmissions, counties } = useLiveData();
+  const [statusOverrides, setStatusOverrides] = useState<Record<string, VerificationStatus>>({});
+  const submissions = fieldSubmissions.map((s) => (statusOverrides[s.id] ? { ...s, status: statusOverrides[s.id] } : s));
 
   function setStatus(id: string, status: VerificationStatus) {
-    setSubmissions((prev) => prev.map((s) => (s.id === id ? { ...s, status } : s)));
+    setStatusOverrides((prev) => ({ ...prev, [id]: status }));
+    void updateFieldSubmissionStatus(id, status).catch(() => undefined);
   }
 
-  const baselineDone = 82;
-  const endlineDone = 41;
+  const baselineCount = fieldSubmissions.filter((s) => s.type.toLowerCase().includes('baseline')).length;
+  const endlineCount = fieldSubmissions.filter((s) => s.type.toLowerCase().includes('endline')).length;
+  const verifiedCount = fieldSubmissions.filter((s) => s.status === 'verified').length;
 
   return (
     <div className="flex flex-col gap-6">
       <Card>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="font-display text-[16px] font-bold text-[#14201A]">Kenya Malaria Programme — 2026</h2>
-            <p className="text-[12.5px] text-[#55665C]">18 counties · 3,200 target households · Baseline Nov 2025, endline in progress</p>
+            <h2 className="font-display text-[16px] font-bold text-[#14201A]">Kenya Malaria Programme</h2>
+            <p className="text-[12.5px] text-[#55665C]">{counties.length} counties monitored · {fieldSubmissions.length} field submissions received</p>
           </div>
-          <div className="flex items-center gap-2 rounded-full bg-[#E3F3EB] px-3 py-1.5 text-[12.5px] font-semibold text-[#0A5A41]"><Users2 size={14} /> 64 active enumerators</div>
+          <div className="flex items-center gap-2 rounded-full bg-[#E3F3EB] px-3 py-1.5 text-[12.5px] font-semibold text-[#0A5A41]"><Users2 size={14} /> {verifiedCount} verified submissions</div>
         </div>
         <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <div className="mb-1.5 flex items-center justify-between text-[13px]"><span className="font-medium text-[#14201A]">Baseline completion</span><span className="text-[#55665C]">{baselineDone}%</span></div>
-            <ProgressBar value={baselineDone} color="#0E7C5A" />
+            <div className="mb-1.5 flex items-center justify-between text-[13px]"><span className="font-medium text-[#14201A]">Baseline submissions</span><span className="text-[#55665C]">{baselineCount}</span></div>
+            <ProgressBar value={fieldSubmissions.length ? Math.round((baselineCount / fieldSubmissions.length) * 100) : 0} color="#0E7C5A" />
           </div>
           <div>
-            <div className="mb-1.5 flex items-center justify-between text-[13px]"><span className="font-medium text-[#14201A]">Endline completion</span><span className="text-[#55665C]">{endlineDone}%</span></div>
-            <ProgressBar value={endlineDone} color="#2E6FA7" />
+            <div className="mb-1.5 flex items-center justify-between text-[13px]"><span className="font-medium text-[#14201A]">Endline submissions</span><span className="text-[#55665C]">{endlineCount}</span></div>
+            <ProgressBar value={fieldSubmissions.length ? Math.round((endlineCount / fieldSubmissions.length) * 100) : 0} color="#2E6FA7" />
           </div>
         </div>
       </Card>
@@ -39,10 +44,11 @@ export default function FieldData() {
       <Card>
         <h2 className="font-display text-[16px] font-bold text-[#14201A]">Baseline vs. endline indicators</h2>
         <p className="mb-4 text-[12.5px] text-[#55665C]">Percentage-point change and percentage change are reported separately.</p>
+        {indicators.length === 0 && <p className="py-6 text-center text-[13px] text-[#55665C]">No indicators recorded yet. Values appear here once baseline and endline surveys are submitted.</p>}
         <div className="flex flex-col divide-y divide-[#E2E6DE]">
           {indicators.map((ind) => {
             const ptChange = ind.endline - ind.baseline;
-            const pctChange = (ptChange / ind.baseline) * 100;
+            const pctChange = ind.baseline !== 0 ? (ptChange / ind.baseline) * 100 : 0;
             const improved = ind.goodDirection === 'up' ? ptChange > 0 : ptChange < 0;
             return (
               <div key={ind.code} className="grid grid-cols-1 gap-3 py-4 sm:grid-cols-[1fr_auto] sm:items-center">
@@ -76,6 +82,8 @@ export default function FieldData() {
           <ClipboardList size={16} className="text-[#0A5A41]" />
           <h2 className="font-display text-[16px] font-bold text-[#14201A]">Data verification queue</h2>
         </div>
+        {submissions.length === 0 && <p className="py-6 text-center text-[13px] text-[#55665C]">No field submissions yet. Submissions from enumerators will appear here for review.</p>}
+        {submissions.length > 0 && (
         <table className="w-full min-w-[680px] border-collapse text-left text-[13px]">
           <thead>
             <tr className="border-b border-[#E2E6DE] text-[12px] text-[#55665C]">
@@ -109,7 +117,9 @@ export default function FieldData() {
             ))}
           </tbody>
         </table>
+        )}
       </Card>
     </div>
   );
 }
+

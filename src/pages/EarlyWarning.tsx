@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { AlertTriangle, MapPin, Clock, Users, Layers } from 'lucide-react';
 import { Card, RiskBadge, AlertStatusPill, RISK_META } from '../components/ui';
 import { useLiveData } from '../lib/liveData';
+import { updateAlertStatus } from '../lib/api';
 import type { RiskLevel, AlertStatus } from '../types';
 
 const STATUS_FLOW: AlertStatus[] = ['created', 'acknowledged', 'investigating', 'resolved'];
@@ -27,7 +28,9 @@ export default function EarlyWarning() {
   function advance(id: string) {
     const current = alerts.find((a) => a.id === id);
     if (!current) return;
-    setStatusOverrides((prev) => ({ ...prev, [id]: nextStatus(current.status) }));
+    const next = nextStatus(current.status);
+    setStatusOverrides((prev) => ({ ...prev, [id]: next }));
+    void updateAlertStatus(id, next).catch(() => undefined);
   }
 
   return (
