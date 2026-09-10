@@ -114,7 +114,7 @@ export default function Login({ onSignIn }: { onSignIn: (user: SessionUser) => v
     <main className="min-h-screen overflow-y-auto bg-[#092318] px-3 py-6 text-[#14201A] sm:px-4 sm:py-16">
       <div className="mx-auto flex min-h-[calc(100vh-3rem)] max-w-[860px] flex-col items-center justify-center">
         <div className="mb-5 text-center sm:mb-7">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#087DCC] to-[#17B866] text-white shadow-lg sm:h-14 sm:w-14"><Shield size={26} /></div>
+          <img src="/malariawatch-logo.svg" alt="MalariaWatch logo" className="mx-auto h-20 w-20 rounded-2xl object-cover shadow-lg sm:h-24 sm:w-24" />
           <h1 className="mt-3 font-display text-[22px] font-extrabold text-white sm:mt-4 sm:text-[23px]">MalariaWatch</h1>
           <p className="mt-1 flex items-center justify-center gap-1.5 text-[12px] text-[#9EB7A9] sm:text-[13px]"><Sparkles size={13} /> Kenya malaria and climate intelligence</p>
         </div>
