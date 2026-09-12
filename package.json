@@ -8,6 +8,7 @@
         "build": "vite build",
         "preview": "vite preview",
         "server": "node server/index.mjs",
+        "start": "node server/index.mjs",
         "db:migrate": "node database/migrate.mjs",
         "db:seed": "node database/seed.mjs"
     },

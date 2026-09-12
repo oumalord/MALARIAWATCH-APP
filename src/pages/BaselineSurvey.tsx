@@ -105,6 +105,8 @@ export default function BaselineSurvey({ user, onSignOut }: { user: SessionUser;
   const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
   const [notes, setNotes] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const section = SECTIONS[sectionIndex];
 
   function updateAnswer(id: string, value: string | string[]) {
@@ -117,23 +119,33 @@ export default function BaselineSurvey({ user, onSignOut }: { user: SessionUser;
     updateAnswer(id, next);
   }
 
-  function nextSection(event?: FormEvent) {
+  async function nextSection(event?: FormEvent) {
     event?.preventDefault();
     if (sectionIndex < SECTIONS.length - 1) {
       setSectionIndex((current) => current + 1);
       return;
     }
     const county = counties.find((c) => c.name === user.county) ?? counties[0];
-    if (county) {
-      void createFieldSubmission({
-        id: `SUB-${Date.now()}`,
+    if (!county) {
+      setSaveError('No county is assigned to this enumerator. Ask an administrator to update the account.');
+      return;
+    }
+    setSaving(true);
+    setSaveError('');
+    try {
+      await createFieldSubmission({
+        id: `SUB-${crypto.randomUUID()}`,
         formType: 'Baseline Survey',
         enumeratorName: user.name,
         countyId: county.id,
         payload: { subcounty: answers.A2 ?? null, answers, notes },
-      }).catch(() => undefined);
+      });
+      setSubmitted(true);
+    } catch {
+      setSaveError('The survey could not be saved. Check the connection and try again. Your answers are still on this screen.');
+    } finally {
+      setSaving(false);
     }
-    setSubmitted(true);
   }
 
   if (submitted) {
@@ -144,8 +156,8 @@ export default function BaselineSurvey({ user, onSignOut }: { user: SessionUser;
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#E3F3EB] text-[#0E7C5A]"><Check size={28} /></div>
           <h1 className="mt-5 font-display text-2xl font-bold">Baseline survey saved</h1>
           <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-[#55665C]">Thank you very much for your time and honesty. This information will help us design activities that are useful for your household and community.</p>
-          <p className="mt-5 text-xs text-[#55665C]">The record is ready to sync when a connection is available. Contact info.pivotyouthcircle@gmail.com with questions.</p>
-          <button type="button" onClick={() => { setSubmitted(false); setStarted(false); setConsent(''); setSectionIndex(0); setAnswers({}); setNotes(''); }} className="mt-7 rounded-lg bg-[#0E7C5A] px-5 py-3 text-sm font-bold text-white hover:bg-[#0A684B]">Start another baseline</button>
+          <p className="mt-5 text-xs text-[#55665C]">This record is saved to the programme database. You can now collect data from another target household.</p>
+          <button type="button" onClick={() => { setSubmitted(false); setStarted(false); setConsent(''); setSectionIndex(0); setAnswers({}); setNotes(''); setSaveError(''); }} className="mt-7 rounded-lg bg-[#0E7C5A] px-5 py-3 text-sm font-bold text-white hover:bg-[#0A684B]">Collect another target</button>
         </section>
       </main>
     );
@@ -174,7 +186,7 @@ export default function BaselineSurvey({ user, onSignOut }: { user: SessionUser;
     <main className="min-h-screen bg-[#F6F7F4] px-4 py-5 text-[#14201A] sm:px-8">
       <SurveyHeader user={user} onSignOut={onSignOut} />
       <div className="mx-auto mt-5 max-w-5xl"><div className="flex items-start justify-between gap-3"><div><p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#0A5A41]">Baseline · Section {section.id}/{SECTIONS.length}</p><h1 className="mt-1 font-display text-xl font-bold sm:text-2xl">{section.title}</h1><p className="mt-1 text-[13px] text-[#55665C]">{section.description}</p></div><span className="hidden rounded-full bg-[#E3F3EB] px-3 py-1.5 text-xs font-bold text-[#0A5A41] sm:block">{Math.round(((sectionIndex + 1) / SECTIONS.length) * 100)}%</span></div><div className="mt-4 h-2 overflow-hidden rounded-full bg-[#DCE8DF]"><div className="h-full rounded-full bg-[#0E7C5A] transition-all" style={{ width: `${((sectionIndex + 1) / SECTIONS.length) * 100}%` }} /></div>
-        <form onSubmit={nextSection} className="mt-4 rounded-2xl border border-[#E2E6DE] bg-white p-3 shadow-sm sm:mt-5 sm:p-7"><div className="grid gap-3 sm:gap-6 md:grid-cols-2">{section.questions.map((question) => <QuestionField key={question.id} question={question} value={answers[question.id]} onChange={updateAnswer} onToggle={toggleMulti} />)}</div><label className="mt-5 block border-t border-[#E2E6DE] pt-4 text-sm font-semibold text-[#3D4D44] sm:mt-7 sm:pt-5">Enumerator notes / follow-up details<textarea value={notes} onChange={(event) => setNotes(event.target.value)} rows={3} placeholder="Record conditional details, amounts, species, explanations, or other observations..." className="mt-2 w-full rounded-lg border border-[#DCE2DB] p-3 text-sm font-normal outline-none focus:border-[#0E7C5A]" /></label><div className="mt-5 flex items-center justify-between gap-2 border-t border-[#E2E6DE] pt-4 sm:mt-7 sm:pt-5"><button type="button" disabled={sectionIndex === 0} onClick={() => setSectionIndex((current) => current - 1)} className="inline-flex items-center gap-1 rounded-lg border border-[#DCE2DB] px-3 py-2.5 text-xs font-bold text-[#55665C] disabled:invisible sm:px-4 sm:text-sm"><ChevronLeft size={16} /> Back</button><button type="submit" className="inline-flex items-center gap-1 rounded-lg bg-[#0E7C5A] px-3 py-2.5 text-xs font-bold text-white hover:bg-[#0A684B] sm:px-5 sm:text-sm">{sectionIndex === SECTIONS.length - 1 ? 'Save survey' : `Next: Section ${SECTIONS[sectionIndex + 1].id}`} <ChevronRight size={16} /></button></div></form>
+        <form onSubmit={nextSection} className="mt-4 rounded-2xl border border-[#E2E6DE] bg-white p-3 shadow-sm sm:mt-5 sm:p-7"><div className="grid gap-3 sm:gap-6 md:grid-cols-2">{section.questions.map((question) => <QuestionField key={question.id} question={question} value={answers[question.id]} onChange={updateAnswer} onToggle={toggleMulti} />)}</div><label className="mt-5 block border-t border-[#E2E6DE] pt-4 text-sm font-semibold text-[#3D4D44] sm:mt-7 sm:pt-5">Enumerator notes / follow-up details<textarea value={notes} onChange={(event) => setNotes(event.target.value)} rows={3} placeholder="Record conditional details, amounts, species, explanations, or other observations..." className="mt-2 w-full rounded-lg border border-[#DCE2DB] p-3 text-sm font-normal outline-none focus:border-[#0E7C5A]" /></label>{saveError && <p className="mt-4 rounded-lg bg-[#FFF1F0] p-3 text-xs font-medium text-[#B23434]">{saveError}</p>}<div className="mt-5 flex items-center justify-between gap-2 border-t border-[#E2E6DE] pt-4 sm:mt-7 sm:pt-5"><button type="button" disabled={sectionIndex === 0 || saving} onClick={() => setSectionIndex((current) => current - 1)} className="inline-flex items-center gap-1 rounded-lg border border-[#DCE2DB] px-3 py-2.5 text-xs font-bold text-[#55665C] disabled:invisible sm:px-4 sm:text-sm"><ChevronLeft size={16} /> Back</button><button type="submit" disabled={saving} className="inline-flex items-center gap-1 rounded-lg bg-[#0E7C5A] px-3 py-2.5 text-xs font-bold text-white hover:bg-[#0A684B] disabled:cursor-wait disabled:opacity-60 sm:px-5 sm:text-sm">{saving ? 'Saving...' : sectionIndex === SECTIONS.length - 1 ? 'Save survey' : `Next: Section ${SECTIONS[sectionIndex + 1].id}`} <ChevronRight size={16} /></button></div></form>
       </div>
     </main>
   );

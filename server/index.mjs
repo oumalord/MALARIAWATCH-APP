@@ -2,6 +2,8 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import pg from 'pg';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const { Pool } = pg;
 const connectionString = process.env.DATABASE_URL;
@@ -12,6 +14,7 @@ if (!connectionString) {
 
 const pool = new Pool({ connectionString });
 const app = express();
+const rootDirectory = path.dirname(fileURLToPath(import.meta.url));
 app.use(cors());
 app.use(express.json());
 
@@ -178,6 +181,9 @@ app.get('/api/weather-trend', async (_req, res) => {
     temperature: result.rows.map((r) => Number(r.temperature)),
   });
 });
+
+app.use(express.static(path.join(rootDirectory, '../dist')));
+app.get(/.*/, (_req, res) => res.sendFile(path.join(rootDirectory, '../dist/index.html')));
 
 const port = process.env.PORT || 8787;
 app.listen(port, () => console.log(`MalariaWatch API listening on port ${port}`));
