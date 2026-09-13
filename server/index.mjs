@@ -106,6 +106,16 @@ async function findStaffUser(email) {
   return result.rows[0];
 }
 
+async function findActor(id) {
+  if (!id) return undefined;
+  const result = await pool.query('select id, role from app_users where id = $1 and active = true', [id]);
+  return result.rows[0];
+}
+
+function mayManage(actor, targetRole) {
+  return actor?.role === 'super_admin' || (actor?.role === 'admin' && targetRole === 'enumerator');
+}
+
 app.post('/api/auth/staff/login', async (req, res) => {
   const { email, pin } = req.body;
   if (!email || !pin) return res.status(400).json({ error: 'Email and PIN are required.' });
@@ -133,6 +143,8 @@ app.get('/api/staff-accounts', async (_req, res) => {
 app.post('/api/staff-accounts', async (req, res) => {
   const { name, email, role, organisation, county, createdBy } = req.body;
   if (!name || !email || !['admin', 'enumerator'].includes(role)) return res.status(400).json({ error: 'Name, email, and a valid staff role are required.' });
+  const actor = await findActor(createdBy);
+  if (!mayManage(actor, role)) return res.status(403).json({ error: 'You do not have permission to create this account.' });
   const countyResult = county ? await pool.query('select id from counties where name = $1 limit 1', [county]) : { rows: [] };
   const passwordHash = await bcrypt.hash('1234', 12);
   try {
@@ -150,14 +162,26 @@ app.post('/api/staff-accounts', async (req, res) => {
 });
 
 app.patch('/api/staff-accounts/:id/status', async (req, res) => {
-  const { active } = req.body;
+  const { active, actorId } = req.body;
   if (typeof active !== 'boolean') return res.status(400).json({ error: 'active must be true or false.' });
+  const targetResult = await pool.query('select role from app_users where id = $1', [req.params.id]);
+  const actor = await findActor(actorId);
+  if (!mayManage(actor, targetResult.rows[0]?.role)) return res.status(403).json({ error: 'You do not have permission to update this account.' });
   const result = await pool.query(`
     update app_users
     set active = $1, suspended_at = case when $1 then null else now() end
     where id = $2 and role in ('admin', 'enumerator')
     returning id
   `, [active, req.params.id]);
+  if (result.rowCount === 0) return res.status(404).json({ error: 'Staff account not found.' });
+  res.json({ ok: true });
+});
+
+app.delete('/api/staff-accounts/:id', async (req, res) => {
+  const actor = await findActor(req.body.actorId);
+  const targetResult = await pool.query('select role from app_users where id = $1', [req.params.id]);
+  if (!mayManage(actor, targetResult.rows[0]?.role)) return res.status(403).json({ error: 'You do not have permission to delete this account.' });
+  const result = await pool.query("delete from app_users where id = $1 and role in ('admin', 'enumerator') returning id", [req.params.id]);
   if (result.rowCount === 0) return res.status(404).json({ error: 'Staff account not found.' });
   res.json({ ok: true });
 });

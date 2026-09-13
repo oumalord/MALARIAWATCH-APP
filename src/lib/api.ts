@@ -35,7 +35,9 @@ export const loginStaff = (email: string, pin: string) =>
 export const getStaffAccounts = () => request<StaffAccount[]>('/staff-accounts');
 export const createStaffAccount = (account: { name: string; email: string; role: Extract<UserRole, 'admin' | 'enumerator'>; organisation: string; county?: string; createdBy?: string }) =>
   request<StaffAccount>('/staff-accounts', { method: 'POST', body: JSON.stringify(account) });
-export const setStaffAccountStatus = (id: string, active: boolean) =>
-  request<{ ok: true }>(`/staff-accounts/${id}/status`, { method: 'PATCH', body: JSON.stringify({ active }) });
+export const setStaffAccountStatus = (id: string, active: boolean, actorId?: string, _actorRole?: UserRole) =>
+  request<{ ok: true }>(`/staff-accounts/${id}/status`, { method: 'PATCH', body: JSON.stringify({ active, actorId }) });
+export const deleteStaffAccount = (id: string, actorId?: string, _actorRole?: UserRole) =>
+  request<{ ok: true }>(`/staff-accounts/${id}`, { method: 'DELETE', body: JSON.stringify({ actorId }) });
 export const changeStaffPin = (id: string, currentPin: string, newPin: string) =>
   request<{ ok: true }>(`/staff-accounts/${id}/pin`, { method: 'PATCH', body: JSON.stringify({ currentPin, newPin }) });
