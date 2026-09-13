@@ -13,7 +13,7 @@ const NAV = [
 ] as const;
 
 export default function Sidebar({ currentRoute, user, onSignOut }: { currentRoute: string; user: SessionUser; onSignOut: () => void }) {
-  const navigation = user.role === 'super_admin' ? [...NAV, { path: '/accounts', label: 'Account Management', icon: UsersRound }] : NAV;
+  const navigation = user.role === 'super_admin' || user.role === 'admin' ? [...NAV, { path: '/accounts', label: 'Account Management', icon: UsersRound }] : NAV;
   const [logoSrc, setLogoSrc] = useState(getStoredLogo());
 
   useEffect(() => {

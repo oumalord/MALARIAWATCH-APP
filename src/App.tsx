@@ -70,7 +70,6 @@ function App() {
   if ((user.role === 'enumerator' || user.role === 'admin') && user.mustChangePin) return <ChangePin user={user} onChanged={signIn} onSignOut={signOut} />;
   if (user.role === 'enumerator') return <><BaselineSurvey user={user} onSignOut={signOut} /><AIAssistant user={user} /></>;
   if (user.role === 'farmer') return <><FarmerDashboard user={user} onSignOut={signOut} /><AIAssistant user={user} /></>;
-  if (user.role === 'admin') return <><AccountManagement user={user} onSignOut={signOut} /><AIAssistant user={user} /></>;
 
   const meta = ROUTE_META[route];
 
