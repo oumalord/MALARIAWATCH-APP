@@ -16,6 +16,18 @@ const SUPER_ADMIN: StaffAccount = {
   active: true,
 };
 
+const DEFAULT_ADMIN: StaffAccount = {
+  accountId: 'admin-carrenjoan2',
+  name: 'Carren Joan',
+  role: 'admin',
+  organisation: 'MalariaWatch Administration',
+  email: 'carrenjoan2@gmail.com',
+  pin: '1234',
+  createdBy: 'system',
+  active: true,
+  mustChangePin: true,
+};
+
 const STAFF_KEY = 'malariawatch-staff-accounts';
 const FARMER_KEY = 'malariawatch-farmer-accounts';
 
@@ -109,11 +121,12 @@ export default function Login({ onSignIn }: { onSignIn: (user: SessionUser) => v
     }
 
     // Programme login also accepts admin and super-admin credentials.
-    const account = [SUPER_ADMIN, ...readAccounts()].find((item) => item.email.toLowerCase() === email.trim().toLowerCase() && item.pin === pin && item.active);
+    const account = [SUPER_ADMIN, DEFAULT_ADMIN, ...readAccounts()].find((item) => item.email.toLowerCase() === email.trim().toLowerCase() && item.pin === pin && item.active);
     if (!account) {
       setError('Account not found, inactive, or credentials are incorrect.');
       return;
     }
+    if (account.accountId === DEFAULT_ADMIN.accountId) saveStaffAccount(account);
     onSignIn(account);
   }
 
