@@ -14,7 +14,7 @@ if (!connectionString) {
 }
 
 const pool = new Pool({ connectionString });
-const app = express();
+export const app = express();
 const rootDirectory = path.dirname(fileURLToPath(import.meta.url));
 app.use(cors());
 app.use(express.json());
@@ -301,5 +301,9 @@ app.get('/api/weather-trend', async (_req, res) => {
 app.use(express.static(path.join(rootDirectory, '../dist')));
 app.get(/.*/, (_req, res) => res.sendFile(path.join(rootDirectory, '../dist/index.html')));
 
-const port = process.env.PORT || 8787;
-app.listen(port, () => console.log(`MalariaWatch API listening on port ${port}`));
+if (!process.env.VERCEL) {
+  const port = process.env.PORT || 8787;
+  app.listen(port, () => console.log(`MalariaWatch API listening on port ${port}`));
+}
+
+export default app;
