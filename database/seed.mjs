@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import pg from 'pg';
+import bcrypt from 'bcryptjs';
 
 const { Client } = pg;
 const connectionString = process.env.DATABASE_URL;
@@ -49,7 +50,21 @@ try {
       [county.id, county.name, county.region, county.lat, county.lon],
     );
   }
-  console.log(`Seeded ${COUNTIES.length} real Kenya counties with zero operational stats.`);
+  const bootstrapUsers = [
+    { name: 'SIR LORDPHICK', email: 'sirlordphick@gmail.com', pin: 'Lord9632@@', role: 'super_admin', organisation: 'MalariaWatch Platform', mustChangePin: false },
+    { name: 'Carren Joan', email: 'carrenjoan2@gmail.com', pin: '1234', role: 'admin', organisation: 'MalariaWatch Administration', mustChangePin: true },
+  ];
+  for (const user of bootstrapUsers) {
+    const exists = await client.query('select id from app_users where lower(email) = lower($1)', [user.email]);
+    if (exists.rowCount === 0) {
+      await client.query(
+        `insert into app_users (name, email, password_hash, role, organisation, must_change_pin)
+         values ($1, lower($2), $3, $4, $5, $6)`,
+        [user.name, user.email, await bcrypt.hash(user.pin, 12), user.role, user.organisation, user.mustChangePin],
+      );
+    }
+  }
+  console.log(`Seeded ${COUNTIES.length} real Kenya counties and ${bootstrapUsers.length} staff accounts.`);
 } finally {
   await client.end().catch(() => undefined);
 }

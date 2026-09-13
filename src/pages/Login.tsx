@@ -2,61 +2,9 @@ import { useEffect, useState } from 'react';
 import { ChevronRight, KeyRound, LockKeyhole, Shield, Sparkles, UserRound } from 'lucide-react';
 import type { SessionUser, UserRole } from '../App';
 import { getStoredLogo, LOGO_UPDATED_EVENT } from '../lib/logo';
+import { loginStaff } from '../lib/api';
 
-type StaffAccount = SessionUser & { email: string; pin: string; createdBy: string; active: boolean };
-
-const SUPER_ADMIN: StaffAccount = {
-  accountId: 'super-admin',
-  name: 'SIR LORDPHICK',
-  role: 'super_admin',
-  organisation: 'MalariaWatch Platform',
-  email: 'sirlordphick@gmail.com',
-  pin: 'Lord9632@@',
-  createdBy: 'system',
-  active: true,
-};
-
-const DEFAULT_ADMIN: StaffAccount = {
-  accountId: 'admin-carrenjoan2',
-  name: 'Carren Joan',
-  role: 'admin',
-  organisation: 'MalariaWatch Administration',
-  email: 'carrenjoan2@gmail.com',
-  pin: '1234',
-  createdBy: 'system',
-  active: true,
-  mustChangePin: true,
-};
-
-const STAFF_KEY = 'malariawatch-staff-accounts';
 const FARMER_KEY = 'malariawatch-farmer-accounts';
-
-function readAccounts(): StaffAccount[] {
-  const saved = window.localStorage.getItem(STAFF_KEY);
-  return saved ? JSON.parse(saved) as StaffAccount[] : [];
-}
-
-export function saveStaffAccount(account: StaffAccount) {
-  const accounts = readAccounts().filter((item) => item.accountId !== account.accountId);
-  window.localStorage.setItem(STAFF_KEY, JSON.stringify([...accounts, account]));
-}
-
-export function getStaffAccounts() { return readAccounts(); }
-
-export function suspendStaffAccount(accountId: string) {
-  const account = readAccounts().find((item) => item.accountId === accountId);
-  if (account) saveStaffAccount({ ...account, active: false });
-}
-
-export function activateStaffAccount(accountId: string) {
-  const account = readAccounts().find((item) => item.accountId === accountId);
-  if (account) saveStaffAccount({ ...account, active: true });
-}
-
-export function updateStaffPin(accountId: string, pin: string) {
-  const account = readAccounts().find((item) => item.accountId === accountId);
-  if (account) saveStaffAccount({ ...account, pin, mustChangePin: false });
-}
 
 export default function Login({ onSignIn }: { onSignIn: (user: SessionUser) => void }) {
   const [role, setRole] = useState<UserRole>('farmer');
@@ -67,6 +15,7 @@ export default function Login({ onSignIn }: { onSignIn: (user: SessionUser) => v
   const [phone, setPhone] = useState('');
   const [county, setCounty] = useState('');
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const [logoSrc, setLogoSrc] = useState(getStoredLogo());
 
   useEffect(() => {
@@ -83,7 +32,7 @@ export default function Login({ onSignIn }: { onSignIn: (user: SessionUser) => v
     setError('');
   }
 
-  function submit(event: React.FormEvent<HTMLFormElement>) {
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError('');
 
@@ -120,14 +69,14 @@ export default function Login({ onSignIn }: { onSignIn: (user: SessionUser) => v
       return;
     }
 
-    // Programme login also accepts admin and super-admin credentials.
-    const account = [SUPER_ADMIN, DEFAULT_ADMIN, ...readAccounts()].find((item) => item.email.toLowerCase() === email.trim().toLowerCase() && item.pin === pin && item.active);
-    if (!account) {
+    setSubmitting(true);
+    try {
+      onSignIn(await loginStaff(email.trim(), pin));
+    } catch {
       setError('Account not found, inactive, or credentials are incorrect.');
-      return;
+    } finally {
+      setSubmitting(false);
     }
-    if (account.accountId === DEFAULT_ADMIN.accountId) saveStaffAccount(account);
-    onSignIn(account);
   }
 
   const farmerSignup = role === 'farmer' && mode === 'signup';
@@ -165,7 +114,7 @@ export default function Login({ onSignIn }: { onSignIn: (user: SessionUser) => v
             <Field label="Email address" value={email} onChange={setEmail} type="email" icon={<UserRound size={16} />} />
             <Field label="Password or PIN" value={pin} onChange={setPin} type="password" icon={<LockKeyhole size={16} />} />
             {error && <p className="text-xs font-medium text-[#B23434]">{error}</p>}
-            <button type="submit" className="w-full rounded-lg bg-[#0E7C5A] px-4 py-3 text-[13px] font-bold text-white hover:bg-[#0A684B]">{farmerSignup ? 'Create farmer account' : 'Log in'} <ChevronRight size={15} className="ml-1 inline" /></button>
+            <button type="submit" disabled={submitting} className="w-full rounded-lg bg-[#0E7C5A] px-4 py-3 text-[13px] font-bold text-white hover:bg-[#0A684B] disabled:cursor-wait disabled:opacity-60">{submitting ? 'Signing in...' : farmerSignup ? 'Create farmer account' : 'Log in'} <ChevronRight size={15} className="ml-1 inline" /></button>
           </form>
 
           {role === 'farmer' && <button type="button" onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setError(''); }} className="mt-5 w-full text-center text-xs font-bold text-[#0A5A41]">{mode === 'login' ? 'New farmer? Create an account' : 'Already registered? Log in'}</button>}

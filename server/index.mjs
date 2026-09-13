@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import pg from 'pg';
+import bcrypt from 'bcryptjs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -80,6 +81,97 @@ function toSubmission(row) {
     payload: row.payload,
   };
 }
+
+function toStaffUser(row) {
+  return {
+    accountId: row.id,
+    name: row.name,
+    role: row.role,
+    organisation: row.organisation,
+    county: row.county_name ?? undefined,
+    mustChangePin: row.must_change_pin,
+    email: row.email,
+    active: row.active,
+  };
+}
+
+async function findStaffUser(email) {
+  const result = await pool.query(`
+    select u.*, c.name as county_name
+    from app_users u
+    left join counties c on c.id = u.county_id
+    where lower(u.email) = lower($1)
+    limit 1
+  `, [email]);
+  return result.rows[0];
+}
+
+app.post('/api/auth/staff/login', async (req, res) => {
+  const { email, pin } = req.body;
+  if (!email || !pin) return res.status(400).json({ error: 'Email and PIN are required.' });
+  const user = await findStaffUser(email.trim());
+  if (!user || !user.active || !['super_admin', 'admin', 'enumerator'].includes(user.role)) {
+    return res.status(401).json({ error: 'Account not found, inactive, or credentials are incorrect.' });
+  }
+  if (!await bcrypt.compare(pin, user.password_hash)) {
+    return res.status(401).json({ error: 'Account not found, inactive, or credentials are incorrect.' });
+  }
+  res.json(toStaffUser(user));
+});
+
+app.get('/api/staff-accounts', async (_req, res) => {
+  const result = await pool.query(`
+    select u.*, c.name as county_name
+    from app_users u
+    left join counties c on c.id = u.county_id
+    where u.role in ('admin', 'enumerator')
+    order by u.created_at desc
+  `);
+  res.json(result.rows.map(toStaffUser));
+});
+
+app.post('/api/staff-accounts', async (req, res) => {
+  const { name, email, role, organisation, county, createdBy } = req.body;
+  if (!name || !email || !['admin', 'enumerator'].includes(role)) return res.status(400).json({ error: 'Name, email, and a valid staff role are required.' });
+  const countyResult = county ? await pool.query('select id from counties where name = $1 limit 1', [county]) : { rows: [] };
+  const passwordHash = await bcrypt.hash('1234', 12);
+  try {
+    const result = await pool.query(`
+      insert into app_users (name, email, password_hash, role, organisation, county_id, must_change_pin, created_by)
+      values ($1, lower($2), $3, $4, $5, $6, true, $7)
+      returning *
+    `, [name.trim(), email.trim(), passwordHash, role, organisation ?? 'MalariaWatch', countyResult.rows[0]?.id ?? null, createdBy ?? null]);
+    const user = result.rows[0];
+    res.status(201).json({ ...toStaffUser(user), county: county ?? undefined });
+  } catch (error) {
+    if (error?.code === '23505') return res.status(409).json({ error: 'An account with this email already exists.' });
+    throw error;
+  }
+});
+
+app.patch('/api/staff-accounts/:id/status', async (req, res) => {
+  const { active } = req.body;
+  if (typeof active !== 'boolean') return res.status(400).json({ error: 'active must be true or false.' });
+  const result = await pool.query(`
+    update app_users
+    set active = $1, suspended_at = case when $1 then null else now() end
+    where id = $2 and role in ('admin', 'enumerator')
+    returning id
+  `, [active, req.params.id]);
+  if (result.rowCount === 0) return res.status(404).json({ error: 'Staff account not found.' });
+  res.json({ ok: true });
+});
+
+app.patch('/api/staff-accounts/:id/pin', async (req, res) => {
+  const { currentPin, newPin } = req.body;
+  if (!currentPin || !newPin || newPin.length < 4) return res.status(400).json({ error: 'Current PIN and a new PIN of at least 4 characters are required.' });
+  const result = await pool.query('select * from app_users where id = $1 and role in (\'admin\', \'enumerator\')', [req.params.id]);
+  const user = result.rows[0];
+  if (!user || !user.active) return res.status(404).json({ error: 'Staff account not found or inactive.' });
+  if (!await bcrypt.compare(currentPin, user.password_hash)) return res.status(401).json({ error: 'The temporary PIN is incorrect.' });
+  await pool.query('update app_users set password_hash = $1, must_change_pin = false where id = $2', [await bcrypt.hash(newPin, 12), user.id]);
+  res.json({ ok: true });
+});
 
 app.get('/api/counties', async (_req, res) => {
   const result = await pool.query('select * from counties order by name');
