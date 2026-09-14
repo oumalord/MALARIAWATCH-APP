@@ -30,7 +30,7 @@ export function KenyaMap({ counties, selectedId, onSelect, interactive = true, s
               {RISK_META[k].label}
             </span>
           ))}
-          <span className="text-[11.5px] text-[#8B978F]">Marker size ≈ confirmed positive cases · illustrative</span>
+          <span className="text-[11.5px] text-[#8B978F]">Marker size reflects confirmed positive cases</span>
         </div>
       )}
     </div>

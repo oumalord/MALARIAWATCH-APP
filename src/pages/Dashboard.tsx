@@ -1,4 +1,4 @@
-import { ShieldAlert, Activity, ClipboardList, Droplets, ArrowUpRight, Info, RadioTower } from 'lucide-react';
+import { ShieldAlert, Activity, ClipboardList, Droplets, ArrowUpRight, RadioTower } from 'lucide-react';
 import { Card, KpiCard, RiskBadge, AlertStatusPill } from '../components/ui';
 import { LineChart, RiskDistributionBar } from '../components/charts';
 import { KenyaMap } from '../components/KenyaMap';
@@ -23,11 +23,6 @@ export default function Dashboard() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-start gap-3 rounded-2xl border border-[#E2E6DE] bg-[#EFF2EC] px-4 py-3">
-        <Info size={16} className="mt-0.5 shrink-0 text-[#55665C]" />
-        <p className="text-[12.5px] leading-relaxed text-[#55665C]">Illustrative demo dataset for design review. Not connected to live health information systems and does not represent confirmed diagnoses.</p>
-      </div>
-
       <div className="flex items-center gap-2 text-[11.5px] font-semibold text-[#0A5A41]">
         <RadioTower size={13} className="animate-pulse" /> {weatherSource === 'live' ? 'Live weather (Open-Meteo)' : 'Simulated weather'} · refreshes every minute · last updated {lastUpdated.toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })}
       </div>

@@ -10,7 +10,8 @@
         "server": "node server/index.mjs",
         "start": "node server/index.mjs",
         "db:migrate": "node database/migrate.mjs",
-        "db:seed": "node database/seed.mjs"
+        "db:seed": "node database/seed.mjs",
+        "db:clear-demo-data": "node database/clear-demo-data.mjs"
     },
     "dependencies": {
         "bcryptjs": "^3.0.3",
